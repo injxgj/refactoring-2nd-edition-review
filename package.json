@@ -10,7 +10,15 @@
     "@babel/node": "^7.16.7",
     "@babel/preset-env": "^7.16.7"
   },
+  "scripts": {
+    "start": "babel-node --experimental-json-modules statement.js"
+  },
   "dependencies": {
     "@babel/cli": "^7.16.7"
   },
+  "babel": {
+    "presets": [
+      "@babel/env"
+    ]
+  }
 }
