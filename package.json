@@ -1,0 +1,16 @@
+{
+  "name": "refactoring",
+  "start": "node --experimental-json-modules example.js",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@babel/core": "^7.16.7",
+    "@babel/node": "^7.16.7",
+    "@babel/preset-env": "^7.16.7"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.16.7"
+  },
+}
