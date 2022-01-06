@@ -1,11 +1,8 @@
 import plays from './plays.json';
-import invoices from './invoices.json';
+import invoice from './invoices.json';
 
 function statement() {
-  let totalAmount = 0;
-  let volumeCredits = 0;
-
-  let result = `청구 내역 (고객명: ${invoices.customer}\n)`;
+  let result = `청구 내역 (고객명: ${invoice.customer}\n)`;
 
   function playFor(aPerformance) {
     return plays[aPerformance.playID];
@@ -43,20 +40,33 @@ function statement() {
   }
 
   function formatAsUSD(aNumber) {
-    // 임시 변수를 질의 함수로 바꾸기
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(aNumber);
   }
 
-  for (let perf of invoices.performances) {
-    let thisAmount = amountFor(perf);
-
-    volumeCredits += volumeCreditsFor(perf);
-
-    result += ` ${playFor(perf).name}: ${formatAsUSD(thisAmount / 100)} (${perf.audience}석)\n`;
-    totalAmount += thisAmount;
+  function totalVolumeCredits() {
+    // 함수 추출
+    let volumeCredits = 0;
+    for (let perf of invoice.performances) {
+      volumeCredits += volumeCreditsFor(perf);
+    }
+    return volumeCredits;
   }
-  result += `총액: ${formatAsUSD(totalAmount / 100)}\n`; // 임시 변수를 질의 함수로 바꾸기
-  result += `적립 포인트:${volumeCredits}점\n`;
+
+  function totalAmount() {
+    let totalAmount = 0;
+    for (let perf of invoice.performances) {
+      totalAmount += amountFor(perf);
+    }
+    return totalAmount;
+  }
+
+  // 청구내역을 출력합니다.
+  for (let perf of invoice.performances) {
+    result += ` ${playFor(perf).name}: ${formatAsUSD(amountFor(perf))} (${perf.audience}석)\n`;
+  }
+
+  result += `총액: ${formatAsUSD(totalAmount())}\n`;
+  result += `적립 포인트:${totalVolumeCredits()}점\n`; // 임시 변수 제거
   return result;
 }
 
