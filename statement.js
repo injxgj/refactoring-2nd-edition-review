@@ -49,19 +49,10 @@ function statement() {
     return result;
   }
   function totalVolumeCredits() {
-    // 함수 추출
-    let volumeCredits = 0;
-    for (let perf of statementData.performances) {
-      volumeCredits += perf.volumeCredits;
-    }
-    return volumeCredits;
+    return statementData.performances.reduce((total, p) => total + p.volumeCredits, 0);
   }
   function totalAmount() {
-    let totalAmount = 0;
-    for (let perf of statementData.performances) {
-      totalAmount += perf.amount;
-    }
-    return totalAmount;
+    return statementData.performances.reduce((total, p) => total + p.amount, 0);
   }
 }
 
