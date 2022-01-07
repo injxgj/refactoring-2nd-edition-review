@@ -2,15 +2,26 @@ import plays from './plays.json';
 import invoice from './invoices.json';
 
 function statement() {
-  let result = `청구 내역 (고객명: ${invoice.customer}\n)`;
+  const statementData = {};
+  statementData.customer = invoice.customer; // 고객 데이터를 중간 데이터로 옮김
+  statementData.performances = invoice.performances.map(enrichPerformance); // 공연 정보를 중간 데이터로 옮김
+  statementData.totalAmount = totalAmount(statementData);
+  statementData.totalVolumeCredits = totalVolumeCredits(statementData);
+  return renderPlainText(statementData); // 필요없어진 인수 제거
 
+  function enrichPerformance(aPerformance) {
+    const result = Object.assign({}, aPerformance); // 얕은 복사
+    result.play = playFor(result);
+    result.amount = amountFor(result);
+    result.volumeCredits = volumeCreditsFor(result);
+    return result;
+  }
   function playFor(aPerformance) {
     return plays[aPerformance.playID];
   }
-
   function amountFor(aPerformance) {
     let result = 0;
-    switch (playFor(aPerformance).type) {
+    switch (aPerformance.play.type) {
       case 'tragedy':
         result = 40000;
         if (aPerformance.audience > 30) {
@@ -29,12 +40,39 @@ function statement() {
     }
     return result;
   }
+  function volumeCreditsFor(aPerformance) {
+    let result = 0; //
+
+    result += Math.max(aPerformance.audience - 30, 0);
+    if ('comedy' === aPerformance.play.type) result += Math.floor(aPerformance.audience / 5);
+
+    return result;
+  }
+  function totalVolumeCredits() {
+    // 함수 추출
+    let volumeCredits = 0;
+    for (let perf of statementData.performances) {
+      volumeCredits += perf.volumeCredits;
+    }
+    return volumeCredits;
+  }
+  function totalAmount() {
+    let totalAmount = 0;
+    for (let perf of statementData.performances) {
+      totalAmount += perf.amount;
+    }
+    return totalAmount;
+  }
+}
+
+function renderPlainText(statementData) {
+  let result = `청구 내역 (고객명: ${statementData.customer}\n)`;
 
   function volumeCreditsFor(aPerformance) {
     let result = 0; //
 
     result += Math.max(aPerformance.audience - 30, 0);
-    if ('comedy' === playFor(aPerformance).type) result += Math.floor(aPerformance.audience / 5);
+    if ('comedy' === aPerformance.play.type) result += Math.floor(aPerformance.audience / 5);
 
     return result;
   }
@@ -43,32 +81,14 @@ function statement() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(aNumber);
   }
 
-  function totalVolumeCredits() {
-    // 함수 추출
-    let volumeCredits = 0;
-    for (let perf of invoice.performances) {
-      volumeCredits += volumeCreditsFor(perf);
-    }
-    return volumeCredits;
-  }
-
-  function totalAmount() {
-    let totalAmount = 0;
-    for (let perf of invoice.performances) {
-      totalAmount += amountFor(perf);
-    }
-    return totalAmount;
-  }
-
   // 청구내역을 출력합니다.
-  for (let perf of invoice.performances) {
-    result += ` ${playFor(perf).name}: ${formatAsUSD(amountFor(perf))} (${perf.audience}석)\n`;
+  for (let perf of statementData.performances) {
+    result += ` ${perf.play.name}: ${formatAsUSD(perf.amount)} (${perf.audience}석)\n`;
   }
 
-  result += `총액: ${formatAsUSD(totalAmount())}\n`;
-  result += `적립 포인트:${totalVolumeCredits()}점\n`; // 임시 변수 제거
+  result += `총액: ${formatAsUSD(statementData.totalAmount)}\n`;
+  result += `적립 포인트:${statementData.totalVolumeCredits}점\n`;
   return result;
 }
 
-// console.log(statement(JSON.parse(invoices), JSON.parse(plays)));
 console.log(statement());
