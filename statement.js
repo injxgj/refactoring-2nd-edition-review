@@ -1,5 +1,5 @@
-import plays from './plays.json';
-import invoice from './invoices.json';
+import plays from './plays.json' assert { type: 'json' };
+import invoice from './invoices.json' assert { type: 'json' };
 
 import createStatementData from './createStatementData.js';
 
@@ -9,19 +9,6 @@ function statement() {
 
 function renderPlainText(statementData) {
   let result = `청구 내역 (고객명: ${statementData.customer}\n)`;
-
-  function volumeCreditsFor(aPerformance) {
-    let result = 0; //
-
-    result += Math.max(aPerformance.audience - 30, 0);
-    if ('comedy' === aPerformance.play.type) result += Math.floor(aPerformance.audience / 5);
-
-    return result;
-  }
-
-  function formatAsUSD(aNumber) {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(aNumber);
-  }
 
   // 청구내역을 출력합니다.
   for (let perf of statementData.performances) {
@@ -33,4 +20,29 @@ function renderPlainText(statementData) {
   return result;
 }
 
+function htmlStatement() {
+  return renderHtml(createStatementData(invoice, plays));
+}
+
+function renderHtml(data) {
+  let result = `<h1>청구 내역 (고객명: ${data.customer})</h1>\n`;
+  result += '<table>\n';
+  result += '<tr><th>연극</th><th>좌석 수</th><th>금액</th></tr>';
+  for (let perf of data.performances) {
+    result += ` <tr><td>${perf.play.name}</td><td>(${perf.audience}석)</td>`;
+    result += `<td>${formatAsUSD(perf.amount)}</td></tr>\n`;
+  }
+  result += '</table>\n';
+  result += `<p>총액: <em>${formatAsUSD(data.totalAmount)}</em></p>\n`;
+  result += `<p>적립 포인트: <em>${data.totalVolumeCredits}</em>점</p>\n`;
+  return result;
+}
+
+function formatAsUSD(aNumber) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(aNumber);
+}
+
+const htmlObject = document.createElement('div');
+htmlObject.innerHTML = htmlStatement();
+document.querySelector('.index').appendChild(htmlObject);
 console.log(statement());
