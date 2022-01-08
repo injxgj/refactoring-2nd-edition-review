@@ -1,45 +1,53 @@
 class PerformanceCalculator {
-  // 공연료 계산기 클래스
   constructor(aPerformance, aPlay) {
     this.performance = aPerformance;
     this.play = aPlay;
   }
 
   get amount() {
-    // amountFor() 함수의 코드를 계산기 클래스로 복사
-    let result = 0;
-    switch (
-      this.play.type // amountFor() 함수가 매개변수로 받던 정보를 계산기 필드에서 바로 얻기
-    ) {
-      case "tragedy":
-        result = 40000;
-        if (this.performance.audience > 30) {
-          // amountFor() 함수가 매개변수로 받던 정보를 계산기 필드에서 바로 얻기
-          result += 1000 * (this.performance.audience - 30);
-        }
-        break;
-      case "comedy":
-        result = 30000;
-        if (this.performance.audience > 20) {
-          result += 10000 + 500 * (this.performance.audience - 20);
-        }
-        result += 300 * this.performance.audience;
-        break;
-      default:
-        throw new Error(`알 수 없는 장르: ${playFor(this.performance).type}`);
-    }
-    return result;
+    throw new Error("서브클래스에서 처리하도록 설계되었습니다."); // 서브클래스에서 처리하도록 유도
   }
 
   get volumeCredits() {
-    let result = 0;
+    return Math.max(this.performance.audience - 30, 0); // 일반적인 동작을 슈퍼클래스에 남겨둡니다.
+  }
+}
 
-    result += Math.max(this.performance.audience - 30, 0);
-    if ("comedy" === this.play.type)
-      result += Math.floor(this.performance.audience / 5);
-
+class TragedyCalculator extends PerformanceCalculator {
+  // 서브 클래스 정의
+  get amount() {
+    let result = 40000;
+    if (this.performance.audience > 30) {
+      result += 1000 * (this.performance.audience - 30);
+    }
     return result;
   }
+}
+class ComedyCalculator extends PerformanceCalculator {
+  // 서브 클래스 정의
+  get amount() {
+    let result = 30000;
+    if (this.performance.audience > 20) {
+      result += 10000 + 500 * (this.performance.audience - 20);
+    }
+    result += 300 * this.performance.audience;
+    return result;
+  }
+  get volumeCredits() {
+    return super.volumeCredits + Math.floor(this.performance.audience / 5);
+  }
+}
+
+function createPerformanceCalculator(aPerformance, aPlay) {
+  switch (aPlay.type) {
+    case "tragedy":
+      return new TragedyCalculator(aPerformance, aPlay);
+    case "comedy":
+      return new ComedyCalculator(aPerformance, aPlay);
+    default:
+      throw new Error(`알 수 없는 장르: ${aPlay.type}`);
+  }
+  // return new PerformanceCalculator(aPerformance, aPlay);
 }
 
 export default function createStatementData(invoice, plays) {
@@ -51,16 +59,15 @@ export default function createStatementData(invoice, plays) {
 
   return statementData;
 
-  // statementData를 정제하는 util함수들
   function enrichPerformance(aPerformance) {
-    const calculator = new PerformanceCalculator(
+    const calculator = createPerformanceCalculator(
       aPerformance,
       playFor(aPerformance)
-    ); // 공연료 계산기 생성
+    );
     const result = Object.assign({}, aPerformance);
-    result.play = calculator.play; // playFor 대신 계산기의 play 프로퍼티 이용
-    result.amount = calculator.amount; // amountFor 대신 계산기의 amount메서드 이용
-    result.volumeCredits = calculator.volumeCredits; // volumeCreditsFor() 대신 계산기의 volumeCredits이용
+    result.play = calculator.play;
+    result.amount = calculator.amount;
+    result.volumeCredits = calculator.volumeCredits;
     return result;
   }
   function playFor(aPerformance) {
